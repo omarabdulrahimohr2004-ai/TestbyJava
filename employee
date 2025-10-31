@@ -1,0 +1,57 @@
+import unittest
+from unittest.mock import patch, Mock
+from employee_repository import EmployeeRepository
+
+class TestEmployeeRepository(unittest.TestCase):
+
+    @patch('employee_repository.requests.get')
+    def test_get_employees_successful_retrieval(self, mock_get):
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = [
+            {"id": 3, "name": "Alice", "position": "Developer"},
+            {"id": 1, "name": "Bob", "position": "Manager"},
+            {"id": 2, "name": "Charlie", "position": "Designer"}
+        ]
+        mock_get.return_value = mock_response
+
+        repo = EmployeeRepository()
+        employees = repo.get_employees()
+
+        self.assertEqual(len(employees), 3)
+        self.assertTrue(all('id' in e for e in employees))
+        mock_get.assert_called_once()
+
+    @patch('employee_repository.requests.get')
+    def test_get_employees_sorted_by_id(self, mock_get):
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = [
+            {"id": 3, "name": "Alice", "position": "Developer"},
+            {"id": 1, "name": "Bob", "position": "Manager"},
+            {"id": 2, "name": "Charlie", "position": "Designer"}
+        ]
+        mock_get.return_value = mock_response
+
+        repo = EmployeeRepository()
+        employees = repo.get_employees()
+
+        expected_order = [1, 2, 3]
+        actual_order = [emp['id'] for emp in employees]
+        self.assertEqual(actual_order, expected_order)
+
+    @patch('employee_repository.requests.get')
+    def test_get_employees_error_handling(self, mock_get):
+        mock_response = Mock()
+        mock_response.status_code = 500
+        mock_response.json.return_value = {"error": "Internal Server Error"}
+        mock_get.return_value = mock_response
+
+        repo = EmployeeRepository()
+        with self.assertRaises(Exception):
+            repo.get_employees()
+
+        mock_get.assert_called_once()
+
+if __name__ == '__main__':
+    unittest.main()
